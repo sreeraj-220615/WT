@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -113,3 +114,251 @@ loadFolder("inbox",document.querySelector(".menu li"));
 </script>
 </body>
 </html>
+=======
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Email Client UI</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    display: flex;
+    height: 100vh;
+    background: #eaeaea;
+    transition: 0.3s;
+}
+
+/* DARK MODE */
+body.dark {
+    background: #121212;
+    color: white;
+}
+
+/* SIDEBAR */
+nav {
+    width: 280px;
+    background: #f4f6f8;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+}
+
+body.dark nav {
+    background: #1e1e1e;
+}
+
+button {
+    width: 100%;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-weight: bold;
+    padding: 12px;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+.menu li {
+    list-style: none;
+    padding: 10px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.menu li.active {
+    background: #d3e3fd;
+    font-weight: bold;
+}
+
+.menu li:hover {
+    background: #e8f0fe;
+}
+
+.email-list {
+    margin-top: 15px;
+}
+
+.email-item {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+.email-item:hover {
+    background: #ddd;
+}
+
+.email-item.unread {
+    font-weight: bold;
+}
+
+/* MAIN */
+main {
+    flex: 1;
+    padding: 30px;
+    background: white;
+}
+
+body.dark main {
+    background: #181818;
+}
+
+.email-header {
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+.actions button {
+    width: auto;
+    margin-right: 10px;
+}
+
+/* COMPOSE MODAL */
+.compose-box {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.compose {
+    background: white;
+    padding: 20px;
+    width: 350px;
+    border-radius: 10px;
+}
+
+.compose input, .compose textarea {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+}
+
+body.dark .compose {
+    background: #222;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+    <button onclick="openCompose()">Compose</button>
+    <button onclick="toggleDark()">🌙 Dark Mode</button>
+
+    <ul class="menu">
+        <li class="active" onclick="loadFolder('inbox',this)">Inbox</li>
+        <li onclick="loadFolder('starred',this)">Starred</li>
+        <li onclick="loadFolder('important',this)">Snoozed</li>
+        <li onclick="loadFolder('sent',this)">Sent</li>
+        <li onclick="loadFolder('drafts',this)">Drafts</li>
+        <li onclick="loadFolder('trash',this)">Trash</li>
+        <li onclick="loadFolder('spam',this)">Spam</li>
+    </ul>
+
+    <div class="email-list" id="emailList"></div>
+</nav>
+
+<main>
+    <div class="email-header">
+        <h2 id="subject">Select an email</h2>
+        <p id="from"></p>
+    </div>
+
+    <div class="actions">
+        <button onclick="reply()">Reply</button>
+        <button onclick="deleteMail()">Delete</button>
+    </div>
+
+    <p id="body" style="margin-top:15px;"></p>
+</main>
+
+<!-- COMPOSE -->
+<div class="compose-box" id="composeBox">
+    <div class="compose">
+        <h3>New Message</h3>
+        <input placeholder="To">
+        <input placeholder="Subject">
+        <textarea rows="4" placeholder="Message"></textarea>
+        <button onclick="closeCompose()">Send</button>
+    </div>
+</div>
+
+<script>
+const emails = {
+    inbox: [
+        {from:"Vasu Sir", subject:"Project Reminder", body:"Do lab tasks", unread:true},
+        {from:"Sam", subject:"Lunch", body:"Friday lunch?"}
+    ],
+    sent: [
+        {from:"You", subject:"Submission", body:"Project submitted"}
+    ],
+    drafts: [
+        {from:"You", subject:"Incomplete Mail", body:"Draft content"}
+    ]
+};
+
+let currentFolder = "inbox";
+
+function loadFolder(folder, el) {
+    currentFolder = folder;
+    document.querySelectorAll('.menu li').forEach(i=>i.classList.remove('active'));
+    el.classList.add('active');
+
+    const list = document.getElementById("emailList");
+    list.innerHTML = "";
+
+    emails[folder].forEach((mail,i)=>{
+        const div = document.createElement("div");
+        div.className = "email-item";
+        div.innerHTML = `<b>${mail.subject}</b><br>${mail.from}`;
+        div.onclick = ()=>openMail(mail);
+        list.appendChild(div);
+    });
+}
+
+function openMail(mail){
+    document.getElementById("subject").innerText = mail.subject;
+    document.getElementById("from").innerText = "From: " + mail.from;
+    document.getElementById("body").innerText = mail.body;
+}
+
+function deleteMail(){
+    alert("Mail Deleted (demo)");
+}
+
+function reply(){
+    openCompose();
+}
+
+function toggleDark(){
+    document.body.classList.toggle("dark");
+}
+
+function openCompose(){
+    document.getElementById("composeBox").style.display="flex";
+}
+
+function closeCompose(){
+    document.getElementById("composeBox").style.display="none";
+}
+
+loadFolder("inbox", document.querySelector(".menu li"));
+</script>
+
+</body>
+</html>
+>>>>>>> 0885f36743e6a8aaa0361f5e71136cffeeac7078
