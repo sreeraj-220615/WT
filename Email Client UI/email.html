@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProMail - Email Client</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --light-bg: #f8f9fa;
+            --dark-bg: #121212;
+            --card-bg: #ffffff;
+            --dark-card: #1e1e1e;
+            --text: #202124;
+            --text-light: #5f6368;
+            --border: #dadce0;
+            --unread: #e8f0fe;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        body {
+            display: flex;
+            height: 100vh;
+            background: var(--light-bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background: var(--dark-bg);
+            color: #fff;
+            --card-bg: var(--dark-card);
+            --border: #333;
+            --text: #e8eaed;
+            --unread: #2d2d2d;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+        }
+        
+        .logo {
+            padding: 24px 20px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .compose-btn {
+            margin: 20px;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        
+        .compose-btn:hover { background: var(--primary-dark); }
+        
+        /* Navigation */
+        .nav-menu {
+            padding: 0 16px;
+            flex: 1;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+        
+        .nav-item.active, .nav-item:hover {
+            background: var(--unread);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        /* Calendar Section */
+        .calendar-section {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        
+        .calendar-day {
+            text-align: center;
+            padding: 8px 4px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .calendar-day.event {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .calendar-day.today {
+            border: 2px solid var(--primary);
+        }
+        
+        .day-header {
+            font-size: 10px;
+            color: var(--text-light);
+            text-align: center;
+            padding: 4px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            background: var(--light-bg);
+        }
+        
+        .email-list-container {
+            width: 400px;
+            border-right: 1px solid var(--border);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .email-list-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .email-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .email-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .email-item:hover { background: var(--unread); }
+        .email-item.unread { background: var(--unread); }
+        
+        .email-subject {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        
+        .email-preview {
+            color: var(--text-light);
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .email-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 6px;
+        }
+        
+        /* Email Viewer */
+        .email-viewer {
+            flex: 1;
+            padding: 30px;
+            background: var(--card-bg);
+            overflow-y: auto;
+        }
+        
+        .email-header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .email-actions {
+            display: flex;
+            gap: 8px;
+            margin: 20px 0;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text);
+        }
+        
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text);
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text);
+        }
+        
+        /* Utility */
+        .theme-toggle {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">ProMail</div>
+        
+        <button class="compose-btn" onclick="openComposer()">
+            ✏️ Compose
+        </button>
+        
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="loadFolder('inbox')">
+                📥 Inbox <span class="badge" id="inboxCount">2</span>
+            </div>
+            <div class="nav-item" onclick="loadFolder('starred')">⭐ Starred</div>
+            <div class="nav-item" onclick="loadFolder('sent')">📤 Sent</div>
+            <div class="nav-item" onclick="loadFolder('drafts')">📝 Drafts</div>
+            <div class="nav-item" onclick="loadFolder('spam')">🚫 Spam</div>
+        </div>
+        
+        <!-- Calendar -->
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h4>April 2024</h4>
+                <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="day-header">S</div><div class="day-header">M</div><div class="day-header">T</div>
+                <div class="day-header">W</div><div class="day-header">T</div><div class="day-header">F</div>
+                <div class="day-header">S</div>
+                
+                <!-- Calendar days will be generated by JS -->
+                <div id="calendarDays"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Email List -->
+        <div class="email-list-container">
+            <div class="email-list-header">
+                <h3 id="folderTitle">Inbox</h3>
+                <p id="emailCount">2 emails</p>
+            </div>
+            <div class="email-list" id="emailList"></div>
+        </div>
+        
+        <!-- Email Viewer -->
+        <div class="email-viewer" id="emailViewer">
+            <div class="email-header">
+                <h2 id="emailSubject">Select an email to read</h2>
+                <p id="emailFrom"></p>
+            </div>
+            <div class="email-actions">
+                <button class="action-btn" onclick="replyToEmail()">↩️ Reply</button>
+                <button class="action-btn" onclick="forwardEmail()">↪️ Forward</button>
+                <button class="action-btn" onclick="deleteEmail()">🗑️ Delete</button>
+                <button class="action-btn" onclick="toggleStar()">⭐ Star</button>
+            </div>
+            <div id="emailBody"></div>
+        </div>
+    </div>
+    
+    <!-- Compose Modal -->
+    <div class="modal" id="composeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>New Message</h3>
+                <button class="close-btn" onclick="closeComposer()">×</button>
+            </div>
+            <div class="form-group">
+                <input class="form-control" id="composeTo" placeholder="To" type="email">
+            </div>
+            <div class="form-group">
+                <input class="form-control" id="composeSubject" placeholder="Subject">
+            </div>
+            <div class="form-group">
+                <textarea class="form-control" id="composeBody" rows="8" placeholder="Write your message..."></textarea>
+            </div>
+            <button class="compose-btn" onclick="sendEmail()">Send Email</button>
+        </div>
+    </div>
+
+    <script>
+        // Email data structure
+        const emailData = {
+            inbox: [
+                { id: 1, from: "John Doe", email: "john@company.com", subject: "Project Update Meeting", body: "Hi team, let's schedule a meeting for Friday to discuss the project progress.", time: "10:30 AM", date: "Apr 15", unread: true, starred: false },
+                { id: 2, from: "Sarah Wilson", email: "sarah@techcorp.com", subject: "Budget Approval", body: "The Q2 budget has been approved. Please review the attached document.", time: "Yesterday", date: "Apr 14", unread: true, starred: true },
+                { id: 3, from: "Support Team", email: "support@service.com", subject: "Your Ticket #4567", body: "Your support ticket has been resolved. Let us know if you need further assistance.", time: "Apr 13", date: "Apr 13", unread: false, starred: false }
+            ],
+            sent: [
+                { id: 4, from: "You", email: "me@email.com", subject: "Re: Design Files", body: "Here are the design files you requested.", time: "Apr 12", date: "Apr 12", unread: false, starred: false }
+            ],
+            drafts: [],
+            starred: [],
+            spam: []
+        };
+
+        // Calendar events (day: [events])
+        const calendarEvents = {
+            15: ["Team Meeting", "Project Deadline"],
+            18: ["Client Call"],
+            22: ["Company Event"],
+            25: ["Doctor Appointment"]
+        };
+
+        let currentFolder = 'inbox';
+        let selectedEmail = null;
+
+        // Initialize
+        function init() {
+            loadFolder('inbox');
+            generateCalendar();
+            updateUnreadCount();
+        }
+
+        // Load email folder
+        function loadFolder(folder) {
+            currentFolder = folder;
+            selectedEmail = null;
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update titles
+            document.getElementById('folderTitle').textContent = folder.charAt(0).toUpperCase() + folder.slice(1);
+            
+            // Load emails
+            const emails = emailData[folder] || [];
+            const emailList = document.getElementById('emailList');
+            const emailViewer = document.getElementById('emailViewer');
+            
+            emailList.innerHTML = '';
+            emailViewer.innerHTML = `
+                <div class="email-header">
+                    <h2>Select an email to read</h2>
+                    <p>Click on an email from the list</p>
+                </div>
+            `;
+            
+            // Update count
+            document.getElementById('emailCount').textContent = `${emails.length} email${emails.length !== 1 ? 's' : ''}`;
+            
+            // Render emails
+            emails.forEach(email => {
+                const emailElement = document.createElement('div');
+                emailElement.className = `email-item ${email.unread ? 'unread' : ''}`;
+                emailElement.innerHTML = `
+                    <div class="email-meta">
+                        <span>${email.from}</span>
+                        <span>${email.date}</span>
+                    </div>
+                    <div class="email-subject">${email.starred ? '⭐ ' : ''}${email.subject}</div>
+                    <div class="email-preview">${email.body.substring(0, 60)}...</div>
+                `;
+                emailElement.onclick = () => openEmail(email.id, folder);
+                emailList.appendChild(emailElement);
+            });
+        }
+
+        // Open email
+        function openEmail(id, folder) {
+            const email = (emailData[folder] || []).find(e => e.id === id);
+            if (!email) return;
+            
+            selectedEmail = email;
+            email.unread = false;
+            
+            document.getElementById('emailViewer').innerHTML = `
+                <div class="email-header">
+                    <h2 id="emailSubject">${email.subject}</h2>
+                    <p id="emailFrom"><strong>From:</strong> ${email.from} &lt;${email.email}&gt;</p>
+                    <p><strong>Date:</strong> ${email.date} at ${email.time}</p>
+                </div>
+                <div class="email-actions">
+                    <button class="action-btn" onclick="replyToEmail()">↩️ Reply</button>
+                    <button class="action-btn" onclick="forwardEmail()">↪️ Forward</button>
+                    <button class="action-btn" onclick="deleteEmail()">🗑️ Delete</button>
+                    <button class="action-btn" onclick="toggleStar()">${email.starred ? '★ Unstar' : '⭐ Star'}</button>
+                </div>
+                <div id="emailBody">
+                    <p>${email.body}</p>
+                    ${folder === 'inbox' ? `
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+                            <button class="action-btn" onclick="replyToEmail()">Reply</button>
+                            <button class="action-btn" onclick="forwardEmail()">Forward</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            loadFolder(currentFolder);
+            updateUnreadCount();
+        }
+
+        // Email actions
+        function replyToEmail() {
+            if (!selectedEmail) return;
+            openComposer();
+            document.getElementById('composeTo').value = selectedEmail.email;
+            document.getElementById('composeSubject').value = `Re: ${selectedEmail.subject}`;
+            document.getElementById('composeBody').value = `\n\n--- Original Message ---\nFrom: ${selectedEmail.from}\nSubject: ${selectedEmail.subject}\n\n${selectedEmail.body}`;
+        }
+
+        function forwardEmail() {
+            if (!selectedEmail) return;
+            openComposer();
+            document.getElementById('composeSubject').value = `Fwd: ${selectedEmail.subject}`;
+            document.getElementById('composeBody').value = `\n\n--- Forwarded Message ---\nFrom: ${selectedEmail.from}\nSubject: ${selectedEmail.subject}\n\n${selectedEmail.body}`;
+        }
+
+        function deleteEmail() {
+            if (!selectedEmail) return;
+            if (confirm('Move this email to trash?')) {
+                // In a real app, move to trash
+                alert('Email moved to trash');
+                loadFolder(currentFolder);
+            }
+        }
+
+        function toggleStar() {
+            if (!selectedEmail) return;
+            selectedEmail.starred = !selectedEmail.starred;
+            loadFolder(currentFolder);
+            openEmail(selectedEmail.id, currentFolder);
+        }
+
+        // Compose email
+        function openComposer() {
+            document.getElementById('composeModal').style.display = 'flex';
+        }
+
+        function closeComposer() {
+            document.getElementById('composeModal').style.display = 'none';
+            document.getElementById('composeTo').value = '';
+            document.getElementById('composeSubject').value = '';
+            document.getElementById('composeBody').value = '';
+        }
+
+        function sendEmail() {
+            const to = document.getElementById('composeTo').value;
+            const subject = document.getElementById('composeSubject').value;
+            const body = document.getElementById('composeBody').value;
+            
+            if (!to || !subject || !body) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            const newEmail = {
+                id: Date.now(),
+                from: "You",
+                email: "me@email.com",
+                subject,
+                body,
+                time: "Just now",
+                date: "Today",
+                unread: false,
+                starred: false
+            };
+            
+            emailData.sent.push(newEmail);
+            alert('Email sent successfully!');
+            closeComposer();
+            loadFolder('sent');
+        }
+
+        // Calendar functions
+        function generateCalendar() {
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+            
+            // Generate days 1-30
+            for (let day = 1; day <= 30; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+                
+                // Add today class
+                if (day === 15) dayElement.classList.add('today');
+                
+                // Add event class
+                if (calendarEvents[day]) {
+                    dayElement.classList.add('event');
+                    dayElement.title = calendarEvents[day].join(', ');
+                }
+                
+                calendarDays.appendChild(dayElement);
+            }
+        }
+
+        // Update unread count
+        function updateUnreadCount() {
+            const unreadCount = (emailData.inbox || []).filter(e => e.unread).length;
+            document.getElementById('inboxCount').textContent = unreadCount || '';
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const btn = document.querySelector('.theme-toggle');
+            btn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+        }
+
+        // Initialize on load
+        window.onload = init;
+    </script>
+</body>
+</html>
